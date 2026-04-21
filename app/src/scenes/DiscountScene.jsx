@@ -28,26 +28,37 @@ const CUSTOMERS = [
 const COST = 60;
 const REQUIRED_SALES = 4;
 
-// Generate simple math problem for each price level
-function generateMathProblem(fromPrice, toPrice) {
-  const diff = fromPrice - toPrice;
-  const type = Math.floor(Math.random() * 3);
-  if (type === 0) {
-    // Addition: X + ? = fromPrice, find ?
-    const a = Math.floor(Math.random() * (toPrice - 10)) + 10;
-    return { q: `${a} + X = ${fromPrice}. Tìm X?`, answer: fromPrice - a, hint: `X = ${fromPrice} - ${a}` };
-  } else if (type === 1) {
-    // Subtraction: fromPrice - X = toPrice
-    return { q: `${fromPrice} - X = ${toPrice}. X = ?`, answer: diff, hint: `Giảm bao nhiêu?` };
-  } else {
-    // Multiplication: X × ? = diff
-    const divisor = diff <= 5 ? 1 : [3, 5].find(d => diff % d === 0) || 1;
-    if (divisor === 1) {
-      return { q: `${fromPrice} - X = ${toPrice}. X = ?`, answer: diff, hint: `Giảm bao nhiêu?` };
-    }
-    return { q: `X × ${divisor} = ${diff}. X = ?`, answer: diff / divisor, hint: `${diff} ÷ ${divisor}` };
-  }
-}
+// Simple theory quiz for each price reduction
+const REDUCE_QUIZZES = [
+  {
+    q: 'Khi giảm giá, điều gì xảy ra với lợi nhuận?',
+    opts: ['Tăng lên', 'Giảm xuống', 'Không đổi'],
+    correct: 1,
+    good: 'Đúng! Giá giảm → lợi nhuận giảm 📉',
+    bad: ['Sai rồi! Giá giảm thì lợi nhuận cũng giảm 😅'],
+  },
+  {
+    q: 'Giá cả < Giá trị sẽ dẫn đến hệ quả gì?',
+    opts: ['Phát triển bền vững', 'Tiềm ẩn khủng hoảng', 'Không ảnh hưởng'],
+    correct: 1,
+    good: 'Chính xác! Phá giá tiềm ẩn khủng hoảng 💥',
+    bad: ['Sai! Bán dưới giá trị sẽ gây bất ổn thị trường 📊'],
+  },
+  {
+    q: 'Cung > Cầu thì giá cả sẽ?',
+    opts: ['Cao hơn giá trị', 'Thấp hơn giá trị', 'Bằng giá trị'],
+    correct: 1,
+    good: 'Đúng! Cung lớn hơn cầu → giá giảm ✅',
+    bad: ['Sai rồi! Hàng thừa → giá phải giảm 📉'],
+  },
+  {
+    q: 'Ai là người đầu tiên phát hiện tính hai mặt của lao động?',
+    opts: ['Adam Smith', 'C.Mác', 'David Ricardo'],
+    correct: 1,
+    good: 'Chính xác! C.Mác phát hiện ra điều này 🎓',
+    bad: ['Sai! Đó là C.Mác, không phải ai khác 📚'],
+  },
+];
 
 export default function MarketScene({ onComplete }) {
   const [priceLevel, setPriceLevel] = useState(0);
@@ -58,56 +69,39 @@ export default function MarketScene({ onComplete }) {
   const [totalSold, setTotalSold] = useState(0);
   const [isSelling, setIsSelling] = useState(false);
 
-  // Math quiz state
-  const [mathProblem, setMathProblem] = useState(null);
-  const [mathInput, setMathInput] = useState('');
-  const [mathReaction, setMathReaction] = useState(null);
+  // Quiz state
+  const [quizIdx, setQuizIdx] = useState(null);
+  const [quizReaction, setQuizReaction] = useState(null);
 
   const currentPrice = PRICE_LEVELS[priceLevel].price;
   const earning = currentPrice - COST;
   const moneyScale = Math.max(30, 100 - (priceLevel * 15));
 
-  // Click reduce price → show math problem
+  // Click reduce price → show quiz
   const handleReducePrice = useCallback(() => {
     if (priceLevel >= PRICE_LEVELS.length - 1) return;
-    const from = PRICE_LEVELS[priceLevel].price;
-    const to = PRICE_LEVELS[priceLevel + 1].price;
-    setMathProblem(generateMathProblem(from, to));
-    setMathInput('');
-    setMathReaction(null);
+    setQuizIdx(priceLevel);
+    setQuizReaction(null);
   }, [priceLevel]);
 
-  // Submit math answer
-  const handleMathSubmit = useCallback(() => {
-    if (!mathProblem) return;
-    const userAnswer = parseInt(mathInput, 10);
-    if (isNaN(userAnswer)) {
-      setMathReaction({ text: 'Nhập số đi bạn ơi! 🤦', type: 'bad' });
-      return;
-    }
-    if (userAnswer === mathProblem.answer) {
-      setMathReaction({ text: 'Đúng rồi! Giảm giá thành công 📉', type: 'good' });
+  // Answer quiz
+  const handleQuizAnswer = useCallback((chosenIdx) => {
+    if (quizIdx === null) return;
+    const quiz = REDUCE_QUIZZES[quizIdx % REDUCE_QUIZZES.length];
+    if (chosenIdx === quiz.correct) {
+      setQuizReaction({ text: quiz.good, type: 'good' });
       setTimeout(() => {
         const next = priceLevel + 1;
         setPriceLevel(next);
         setVisibleCustomers(PRICE_LEVELS[next].customers);
-        setMathProblem(null);
-        setMathReaction(null);
-        setMathInput('');
+        setQuizIdx(null);
+        setQuizReaction(null);
       }, 1000);
     } else {
-      const diff = Math.abs(userAnswer - mathProblem.answer);
-      const jokes = [
-        'Sai rồi! Tính lại nào 😂',
-        'Gần đúng... mà chưa đúng! 🧮',
-        'Toán lớp 3 mà bạn ơi! 📚',
-        'Đáp án này thì phá sản luôn! 💸',
-      ];
-      setMathReaction({ text: jokes[Math.floor(Math.random() * jokes.length)], type: 'bad' });
-      setMathInput('');
-      setTimeout(() => setMathReaction(null), 1800);
+      setQuizReaction({ text: quiz.bad[0], type: 'bad' });
+      setTimeout(() => setQuizReaction(null), 1800);
     }
-  }, [mathProblem, mathInput, priceLevel]);
+  }, [quizIdx, priceLevel]);
 
   // Click customer to sell
   const handleCustomerClick = useCallback((customer) => {
@@ -240,7 +234,7 @@ export default function MarketScene({ onComplete }) {
           ))}
         </AnimatePresence>
 
-        {totalSold === 0 && visibleCustomers === 0 && !mathProblem && (
+        {totalSold === 0 && visibleCustomers === 0 && quizIdx === null && (
           <div className="adv-hint">Nhấn "Giảm giá" để bắt đầu thu hút khách →</div>
         )}
         {visibleCustomers > 0 && totalSold === 0 && (
@@ -248,52 +242,48 @@ export default function MarketScene({ onComplete }) {
         )}
       </div>
 
-      {/* ── MATH QUIZ OVERLAY ── */}
+      {/* ── QUIZ OVERLAY ── */}
       <AnimatePresence>
-        {mathProblem && (
-          <motion.div
-            className="quiz-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+        {quizIdx !== null && (() => {
+          const quiz = REDUCE_QUIZZES[quizIdx % REDUCE_QUIZZES.length];
+          return (
             <motion.div
-              className="quiz-box quiz-math"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              className="quiz-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <p className="quiz-label">🧮 Giải bài toán để giảm giá!</p>
-              <p className="quiz-question">{mathProblem.q}</p>
-              <div className="quiz-math-input">
-                <input
-                  type="number"
-                  value={mathInput}
-                  onChange={(e) => setMathInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleMathSubmit()}
-                  placeholder="Nhập đáp án..."
-                  autoFocus
-                  className="quiz-input"
-                />
-                <button className="quiz-submit" onClick={handleMathSubmit}>
-                  Trả lời
-                </button>
-              </div>
-              <AnimatePresence>
-                {mathReaction && (
-                  <motion.div
-                    className={`quiz-reaction ${mathReaction.type}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {mathReaction.text}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.div
+                className="quiz-box"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+              >
+                <p className="quiz-label">📉 Trả lời để giảm giá!</p>
+                <p className="quiz-question">{quiz.q}</p>
+                <div className="quiz-options">
+                  {quiz.opts.map((opt, i) => (
+                    <button key={i} className="quiz-opt" onClick={() => handleQuizAnswer(i)}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <AnimatePresence>
+                  {quizReaction && (
+                    <motion.div
+                      className={`quiz-reaction ${quizReaction.type}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      {quizReaction.text}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </BaseScene>
   );
