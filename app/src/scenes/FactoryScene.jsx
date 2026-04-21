@@ -125,8 +125,8 @@ export default function FactoryScene({ onComplete }) {
                 ) : (
                   <span className="factory-station-icon">{done ? '✓' : isProcessing ? '⏳' : station.icon}</span>
                 )}
+                <span className="factory-station-label">{station.label}</span>
               </div>
-              <span className="factory-station-label">{station.label}</span>
               {isLocked && <span className="factory-station-lock">🔒</span>}
               {isNext && <div className="factory-station-glow" />}
               {isProcessing && (

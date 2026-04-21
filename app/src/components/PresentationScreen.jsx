@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 
 /* Crossfade slideshow for each slide's image area */
@@ -46,11 +46,59 @@ const FRAMES = {
   market: ['/assets/pres_market.webp', '/assets/market_f2.webp'],
 };
 
+const NAV_ITEMS = [
+  { id: 'hero',     label: 'Giới thiệu' },
+  { id: 'goods',    label: 'Hàng hóa' },
+  { id: 'labor',    label: 'Lao động' },
+  { id: 'market',   label: 'Thị trường' },
+  { id: 'challenge',label: 'Thách thức' },
+  { id: 'play',     label: 'Trò chơi' },
+  { id: 'ai-info',  label: 'AI Disclosure' },
+];
+
 export default function PresentationScreen({ onStartGame }) {
+  const [active, setActive] = useState('hero');
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        }
+      },
+      { threshold: 0.35 }
+    );
+    NAV_ITEMS.forEach(n => {
+      const el = document.getElementById(n.id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollTo = useCallback((id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
   return (
     <div className="deck">
+      {/* ── Sticky Nav ── */}
+      <nav className="deck-nav">
+        <span className="deck-nav-logo">☕</span>
+        <div className="deck-nav-links">
+          {NAV_ITEMS.map(n => (
+            <button
+              key={n.id}
+              className={`deck-nav-link ${active === n.id ? 'active' : ''}`}
+              onClick={() => scrollTo(n.id)}
+            >
+              {n.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {/* ━━━━━━━━ SLIDE 1: HERO ━━━━━━━━ */}
-      <section className="slide slide-hero">
+      <section id="hero" className="slide slide-hero">
         <img className="slide-bg" src="/assets/pres_hero.webp" alt="" />
         <div className="slide-dim" />
         <div className="slide-center">
@@ -62,7 +110,7 @@ export default function PresentationScreen({ onStartGame }) {
       </section>
 
       {/* ━━━━━━━━ SLIDE 2: HAI THUỘC TÍNH HÀNG HÓA ━━━━━━━━ */}
-      <section className="slide slide-split">
+      <section id="goods" className="slide slide-split">
         <SlideShow frames={FRAMES.theory} caption="Cà phê — hàng hóa tiêu biểu của Việt Nam" interval={2500} />
         <div className="slide-text-half">
           <RevealBlock>
@@ -93,7 +141,7 @@ export default function PresentationScreen({ onStartGame }) {
       </section>
 
       {/* ━━━━━━━━ SLIDE 3: TÍNH HAI MẶT LAO ĐỘNG ━━━━━━━━ */}
-      <section className="slide slide-split reverse">
+      <section id="labor" className="slide slide-split reverse">
         <div className="slide-text-half">
           <RevealBlock>
             <span className="slide-badge sm">Trọng tâm 2 · Lao động</span>
@@ -127,7 +175,7 @@ export default function PresentationScreen({ onStartGame }) {
       </section>
 
       {/* ━━━━━━━━ SLIDE 4: TIỀN TỆ, GIÁ CẢ & QUY LUẬT THỊ TRƯỜNG ━━━━━━━━ */}
-      <section className="slide slide-split">
+      <section id="market" className="slide slide-split">
         <SlideShow frames={FRAMES.money} caption="Tiền tệ — thước đo và phương tiện trao đổi giá trị" interval={2500} />
         <div className="slide-text-half">
           <RevealBlock>
@@ -163,7 +211,7 @@ export default function PresentationScreen({ onStartGame }) {
       </section>
 
       {/* ━━━━━━━━ SLIDE 5: THÁCH THỨC & GIẢI PHÁP ━━━━━━━━ */}
-      <section className="slide slide-split reverse">
+      <section id="challenge" className="slide slide-split reverse">
         <div className="slide-text-half">
           <RevealBlock>
             <span className="slide-badge sm">Trọng tâm 4 · Thực tiễn</span>
@@ -198,7 +246,7 @@ export default function PresentationScreen({ onStartGame }) {
       </section>
 
       {/* ━━━━━━━━ SLIDE 6: CTA — VÀO GAME ━━━━━━━━ */}
-      <section className="slide slide-hero slide-cta-bg">
+      <section id="play" className="slide slide-hero slide-cta-bg">
         <img className="slide-bg" src="/assets/pres_hero.webp" alt="" style={{ filter: 'brightness(0.3) blur(2px)' }} />
         <div className="slide-dim" />
         <div className="slide-center">
@@ -220,6 +268,72 @@ export default function PresentationScreen({ onStartGame }) {
               Bắt đầu Hành trình
             </motion.button>
           </Fade>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━ SLIDE 7: AI DISCLOSURE ━━━━━━━━ */}
+      <section id="ai-info" className="slide slide-ai-disclosure">
+        <div className="ai-disc-container">
+          <RevealBlock>
+            <h2 className="ai-disc-title">Các nội dung AI nhóm đã sử dụng</h2>
+            <p className="ai-disc-intro">
+              Trang này ghi nhận các hạng mục AI đã dùng trong đề tài.
+              AI đóng vai trò <strong>hỗ trợ</strong>; toàn bộ nội dung học thuật cuối cùng 
+              do nhóm kiểm tra, chỉnh sửa và chịu trách nhiệm.
+            </p>
+
+            <div className="ai-disc-items">
+              {/* Mục 1 */}
+              <div className="ai-disc-item">
+                <div className="ai-disc-num">01</div>
+                <div className="ai-disc-body">
+                  <h3>Dùng AI tạo document theo yêu cầu đề tài</h3>
+                  <dl className="ai-disc-dl">
+                    <dt>Mục đích</dt>
+                    <dd>Tạo bản nháp cấu trúc tài liệu để nhóm triển khai nhanh và đầy đủ ý.</dd>
+                    <dt>Prompt chính</dt>
+                    <dd>Yêu cầu AI đề xuất bố cục tài liệu bám sát đề bài môn học, có phần mở đầu, nội dung chính và kết luận.</dd>
+                    <dt>Kết quả AI trả về</dt>
+                    <dd>Khung document và gợi ý nội dung theo từng mục.</dd>
+                    <dt>Phần nhóm chỉnh sửa</dt>
+                    <dd>Rà soát toàn bộ câu chữ, điều chỉnh thuật ngữ đúng giáo trình LLCT, bổ sung lập luận và ví dụ do nhóm tự viết.</dd>
+                    <dt>Kiểm chứng</dt>
+                    <dd>Đối chiếu thông tin với giáo trình LLCT, nghị quyết và nguồn chính thống trước khi đưa vào bản cuối.</dd>
+                  </dl>
+                </div>
+              </div>
+
+              {/* Mục 2 */}
+              <div className="ai-disc-item">
+                <div className="ai-disc-num">02</div>
+                <div className="ai-disc-body">
+                  <h3>Dùng AI gợi ý hình ảnh minh hoạ</h3>
+                  <dl className="ai-disc-dl">
+                    <dt>Mục đích</dt>
+                    <dd>Gợi ý hình ảnh minh hoạ phù hợp cho slide trình bày và các scene trong trò chơi tương tác.</dd>
+                    <dt>Prompt chính</dt>
+                    <dd>Yêu cầu AI gợi ý hình ảnh phù hợp ngữ cảnh: ruộng cà phê, nhà máy chế biến, thị trường, nhân vật nông dân, v.v.</dd>
+                    <dt>Kết quả AI trả về</dt>
+                    <dd>Các gợi ý và mô tả hình ảnh để nhóm tìm kiếm, chọn lọc từ nguồn phù hợp.</dd>
+                    <dt>Phần nhóm chỉnh sửa</dt>
+                    <dd>Tự tìm và chọn lọc hình ảnh từ nguồn phù hợp, chỉnh sửa kích thước, tối ưu WebP, đảm bảo phong cách đồng nhất.</dd>
+                    <dt>Kiểm chứng</dt>
+                    <dd>Đảm bảo hình ảnh không chứa nội dung sai lệch, phù hợp ngữ cảnh học thuật.</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            {/* Cam kết */}
+            <div className="ai-disc-commit">
+              <h3>Cam kết học thuật của nhóm</h3>
+              <ul>
+                <li>Không để AI làm thay hoàn toàn bài tập; AI chỉ hỗ trợ tạo bản nháp và phương tiện trình bày.</li>
+                <li>Có phân định rõ phần AI output và phần sinh viên tự chỉnh sửa/biên soạn trong quá trình hoàn thiện sản phẩm.</li>
+                <li>Nhóm chịu trách nhiệm toàn bộ về tính chính xác, tính hợp lệ học thuật và nội dung nộp cuối cùng.</li>
+              </ul>
+            </div>
+          </RevealBlock>
         </div>
       </section>
     </div>

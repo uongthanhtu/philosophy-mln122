@@ -123,8 +123,7 @@ export default function CertificationScene({ onComplete }) {
           return (
             <div key={doc.id} className={`cert-doc ${done ? 'done' : ''} ${isCarried ? 'carried' : ''}`}
               style={{ left: `${doc.x}%` }} onClick={(e) => handleDocClick(doc, e)}>
-              <div className="cert-doc-paper"><span>{done ? '✓' : doc.icon}</span></div>
-              <span className="cert-doc-label">{doc.label}</span>
+              <div className="cert-doc-paper"><span>{done ? '✓' : doc.icon}</span><span className="cert-doc-label">{doc.label}</span></div>
               {!done && !isCarried && <div className="adv-tree-ring" style={{ width: 50, height: 14 }} />}
             </div>
           );
