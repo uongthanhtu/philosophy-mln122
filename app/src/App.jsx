@@ -3,7 +3,6 @@ import { AnimatePresence } from 'framer-motion';
 import { GameProvider, useGameState } from './hooks/useGameState';
 import PresentationScreen from './components/PresentationScreen';
 import GameOnboarding from './components/GameOnboarding';
-import CoffeeScene from './three/CoffeeScene';
 import DecisionOverlay from './components/DecisionOverlay';
 import StatsDashboard from './components/StatsDashboard';
 import SceneManager from './scenes/SceneManager';
@@ -27,14 +26,6 @@ function AppContent() {
 
   return (
     <>
-      {/* 3D Scene */}
-      <div style={{
-        opacity: (state.activeScene || state.isDecisionPending) ? 0.15 : 1,
-        transition: 'opacity 0.6s',
-      }}>
-        <CoffeeScene />
-      </div>
-
       {/* 2D Overlay Layer */}
       <div className="overlay-layer">
         <AnimatePresence>
